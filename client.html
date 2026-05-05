@@ -191,7 +191,18 @@ body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color:
 </div>
 
 <script>
-const CLIENT_STEPS = [('Reunión de brief', '🤝', 1, 'Primera reunión con el equipo de Avalon'), ('Aprobación documento de brief', '📋', 1, 'Validación del brief por el cliente'), ('Carga de documentos, imágenes y brandbook', '📁', 2, 'Subida de todos los materiales de marca'), ('Armado de estrategia de comunicación', '⚡', 20, 'Diseño de la estrategia · Micaela Medina'), ('Presentación de estrategia', '🎯', 2, 'Reunión de presentación al cliente'), ('Aprobación de estrategia', '✅', 2, 'Revisión y aprobación de la estrategia'), ('Aprobación plan de posteos', '📅', 1, 'Validación del calendario de contenido'), ('Aprobación press de pauta', '📢', 1, 'Aprobación del plan de medios pagos'), ('Armado de guiones', '📝', 7, 'Producción de guiones audiovisuales'), ('Filmmaker', '🎬', 10, 'Producción audiovisual presencial')];
+const CLIENT_STEPS = [
+  ["Reunión de brief", "🤝", 1, "Primera reunión con el equipo de Avalon"],
+  ["Aprobación documento de brief", "📋", 1, "Validación del brief por el cliente"],
+  ["Carga de documentos, imágenes y brandbook", "📁", 2, "Subida de todos los materiales de marca"],
+  ["Armado de estrategia de comunicación", "⚡", 20, "Diseño de la estrategia · Micaela Medina"],
+  ["Presentación de estrategia", "🎯", 2, "Reunión de presentación al cliente"],
+  ["Aprobación de estrategia", "✅", 2, "Revisión y aprobación de la estrategia"],
+  ["Aprobación plan de posteos", "📅", 1, "Validación del calendario de contenido"],
+  ["Aprobación press de pauta", "📢", 1, "Aprobación del plan de medios pagos"],
+  ["Armado de guiones", "📝", 7, "Producción de guiones audiovisuales"],
+  ["Filmmaker", "🎬", 10, "Producción audiovisual presencial"]
+];
 
 // Leer params de URL
 const params = new URLSearchParams(window.location.search);
