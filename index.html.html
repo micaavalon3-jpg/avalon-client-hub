@@ -795,9 +795,155 @@ input[type="file"] { display: none; }
   .main { padding: 1.25rem; }
   .app-header { padding: 0 1.25rem; }
 }
+
+/* ── LOGIN SCREEN ── */
+#login-screen {
+  position: fixed;
+  inset: 0;
+  background: #0C0C0C;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Instrument Sans', sans-serif;
+}
+
+.login-box {
+  width: 100%;
+  max-width: 380px;
+  padding: 2.5rem 2rem;
+  background: #161616;
+  border: 1px solid #2A2A2A;
+  border-radius: 16px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-box::before {
+  content: '';
+  position: absolute;
+  top: -60px; left: 50%; transform: translateX(-50%);
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(170,67,255,0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.login-logo { margin-bottom: 1.75rem; }
+
+.login-title {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #F0EDE8;
+  margin-bottom: 6px;
+  letter-spacing: -0.01em;
+}
+
+.login-sub {
+  font-size: 12px;
+  color: #6B6865;
+  font-weight: 300;
+  margin-bottom: 2rem;
+}
+
+.login-input-wrap { position: relative; margin-bottom: 12px; }
+
+.login-input {
+  width: 100%;
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 300;
+  color: #F0EDE8;
+  background: #1F1F1F;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 12px 44px 12px 14px;
+  outline: none;
+  transition: border-color .2s;
+  letter-spacing: .05em;
+}
+
+.login-input:focus { border-color: #AA43FF; }
+.login-input::placeholder { color: #6B6865; letter-spacing: 0; }
+
+.login-eye {
+  position: absolute;
+  right: 14px; top: 50%;
+  transform: translateY(-50%);
+  background: none; border: none;
+  color: #6B6865; cursor: pointer;
+  font-size: 16px; padding: 0;
+  transition: color .15s;
+}
+.login-eye:hover { color: #AA43FF; }
+
+.login-btn {
+  width: 100%;
+  font-family: 'Unbounded', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 13px;
+  background: #AA43FF;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  letter-spacing: .04em;
+  transition: all .15s;
+  margin-top: 4px;
+}
+
+.login-btn:hover { background: #9630E8; transform: translateY(-1px); }
+.login-btn:active { transform: none; }
+
+.login-error {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #E05252;
+  min-height: 18px;
+  font-weight: 300;
+}
+
+.login-footer {
+  margin-top: 1.5rem;
+  font-size: 10px;
+  color: #3A3835;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
 </style>
 </head>
 <body>
+
+
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <img src="data:image/png;base64,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" alt="Avalon Agency" style="height:30px;width:auto;">
+    </div>
+    <div class="login-title">Avalon Client Hub</div>
+    <div class="login-sub">Ingresá la contraseña para acceder</div>
+
+    <div class="login-input-wrap">
+      <input
+        class="login-input"
+        type="password"
+        id="pass-input"
+        placeholder="Contraseña"
+        onkeydown="if(event.key==='Enter') checkPass()"
+        autocomplete="current-password"
+      >
+      <button class="login-eye" onclick="togglePass()" id="eye-btn">👁</button>
+    </div>
+
+    <button class="login-btn" onclick="checkPass()">Ingresar</button>
+    <div class="login-error" id="login-error"></div>
+
+    <div class="login-footer">Avalon World Agency · Uso interno</div>
+  </div>
+</div>
 
 <header class="app-header">
   <div class="logo">
@@ -1665,6 +1811,45 @@ function copyEntrega() {
   const el = document.getElementById('o-entrega');
   if (el) navigator.clipboard.writeText(el.innerText);
 }
+
+
+// ── LOGIN ──
+const PASS = 'Avaloninterno2026';
+
+function checkPass() {
+  const val = document.getElementById('pass-input').value;
+  const err = document.getElementById('login-error');
+  if (val === PASS) {
+    const screen = document.getElementById('login-screen');
+    screen.style.opacity = '0';
+    screen.style.transition = 'opacity .4s ease';
+    setTimeout(() => screen.style.display = 'none', 400);
+    sessionStorage.setItem('avalon_auth', '1');
+  } else {
+    err.textContent = 'Contraseña incorrecta. Intentá de nuevo.';
+    document.getElementById('pass-input').value = '';
+    document.getElementById('pass-input').focus();
+    setTimeout(() => err.textContent = '', 3000);
+  }
+}
+
+function togglePass() {
+  const inp = document.getElementById('pass-input');
+  const btn = document.getElementById('eye-btn');
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    btn.textContent = '🙈';
+  } else {
+    inp.type = 'password';
+    btn.textContent = '👁';
+  }
+}
+
+// Si ya se autenticó en esta sesión, no mostrar login
+if (sessionStorage.getItem('avalon_auth') === '1') {
+  document.getElementById('login-screen').style.display = 'none';
+}
+
 </script>
 </body>
 </html>
