@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Avalon · Generador de Estrategia</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700&family=Instrument+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<!-- PDF.js para leer PDFs en el browser -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+:root {
+  --bg: #0C0C0C; --surface: #161616; --surface2: #1F1F1F;
+  --border: #2A2A2A; --border2: #333; --text: #F0EDE8;
+  --muted: #6B6865; --muted2: #999490;
+  --purple: #AA43FF; --purple-dim: #6B2BA8; --purple-bg: rgba(170,67,255,0.08);
+  --orange: #FF6900; --orange-bg: rgba(255,105,0,0.08);
+  --green: #4CAF7D; --green-bg: rgba(76,175,125,0.1);
+  --red: #E05252;
+  --radius: 12px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body { font-family: 'Instrument Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+/* HEADER */
+.header {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 0 2rem; height: 56px; display: flex; align-items: center;
+  justify-content: space-between; position: sticky; top: 0; z-index: 100;
+}
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-tag { font-size: 10px; color: var(--orange); letter-spacing: .08em; text-transform: uppercase; font-weight: 500; }
+
+/* MAIN */
+.wrap { max-width: 780px; margin: 0 auto; padding: 2.5rem 1.5rem; }
+
+.hero { text-align: center; margin-bottom: 2.5rem; }
+.hero h1 {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 1.6rem; font-weight: 700;
+  letter-spacing: -0.02em; color: var(--text);
+  margin-bottom: 8px; line-height: 1.2;
+}
+.hero h1 span { color: var(--orange); }
+.hero p { font-size: 13px; color: var(--muted2); font-weight: 300; line-height: 1.65; max-width: 460px; margin: 0 auto; }
+
+/* STEPS */
+.steps-row {
+  display: flex; gap: 0; margin-bottom: 2rem;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+}
+.step-item {
+  flex: 1; padding: .7rem 1rem; display: flex; align-items: center; gap: 8px;
+  border-right: 1px solid var(--border); font-size: 11px; color: var(--muted);
+}
+.step-item:last-child { border-right: none; }
+.step-item.active { background: var(--orange-bg); color: var(--text); }
+.step-item.done { color: var(--green); }
+.step-num {
+  width: 20px; height: 20px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 600; flex-shrink: 0;
+  background: var(--surface2); color: var(--muted);
+}
+.step-item.active .step-num { background: var(--orange); color: #fff; }
+.step-item.done .step-num { background: var(--green-bg); color: var(--green); }
+
+/* UPLOAD */
+.upload-zone {
+  border: 1.5px dashed var(--border2); border-radius: var(--radius);
+  padding: 2.5rem; text-align: center; cursor: pointer;
+  transition: all .2s; background: var(--surface); margin-bottom: 1rem;
+}
+.upload-zone:hover, .upload-zone.drag {
+  border-color: var(--orange); background: var(--orange-bg);
+}
+.upload-icon {
+  width: 52px; height: 52px; background: var(--orange-bg);
+  border-radius: 12px; display: flex; align-items: center;
+  justify-content: center; margin: 0 auto 12px; font-size: 22px;
+}
+.upload-title { font-family: 'Unbounded', sans-serif; font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+.upload-sub { font-size: 12px; color: var(--muted2); font-weight: 300; }
+.fmt-pills { display: flex; gap: 6px; justify-content: center; margin-top: 10px; }
+.fmt-pill { font-size: 10px; padding: 3px 10px; border-radius: 20px; background: var(--surface2); border: 1px solid var(--border2); color: var(--muted2); }
+input[type="file"] { display: none; }
+
+/* FILE PREVIEW */
+.file-preview {
+  display: none; background: var(--green-bg);
+  border: 1px solid rgba(76,175,125,.3); border-radius: var(--radius);
+  padding: 1rem 1.25rem; margin-bottom: 1rem;
+  align-items: center; gap: 12px;
+}
+.file-preview.show { display: flex; }
+.file-name { font-size: 13px; font-weight: 500; color: var(--green); }
+.file-size { font-size: 11px; color: var(--muted2); margin-top: 2px; }
+
+/* READING STATE */
+.reading-state {
+  display: none; text-align: center; padding: 2rem;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); margin-bottom: 1rem;
+}
+.reading-state.show { display: block; }
+.spin {
+  width: 32px; height: 32px; border: 2px solid var(--border2);
+  border-top-color: var(--orange); border-radius: 50%;
+  animation: spin 1s linear infinite; margin: 0 auto 10px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* RESULT BOX */
+.result-box {
+  display: none;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden; margin-bottom: 1rem;
+}
+.result-box.show { display: block; }
+.result-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: .9rem 1.25rem; background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+}
+.result-title { font-family: 'Unbounded', sans-serif; font-size: 11px; font-weight: 700; color: var(--orange); letter-spacing: .04em; }
+.result-body {
+  padding: 1rem 1.25rem; font-size: 11px; line-height: 1.7;
+  color: var(--muted2); max-height: 220px; overflow-y: auto;
+  white-space: pre-wrap; font-family: 'Courier New', monospace;
+}
+
+/* BUTTONS */
+.btn-primary {
+  width: 100%; font-family: 'Unbounded', sans-serif; font-size: 12px;
+  font-weight: 700; padding: 14px; background: var(--orange); color: #fff;
+  border: none; border-radius: var(--radius); cursor: pointer;
+  transition: all .2s; display: flex; align-items: center;
+  justify-content: center; gap: 8px; letter-spacing: .04em;
+  margin-bottom: 10px;
+}
+.btn-primary:hover { background: #E05D00; transform: translateY(-1px); }
+.btn-primary:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+
+.btn-secondary {
+  width: 100%; font-family: 'Instrument Sans', sans-serif; font-size: 13px;
+  font-weight: 500; padding: 13px; background: transparent; color: var(--text);
+  border: 1px solid var(--border2); border-radius: var(--radius); cursor: pointer;
+  transition: all .15s; display: flex; align-items: center;
+  justify-content: center; gap: 8px;
+}
+.btn-secondary:hover { border-color: var(--purple); color: var(--purple); }
+
+.btn-claude {
+  width: 100%; font-family: 'Unbounded', sans-serif; font-size: 12px;
+  font-weight: 700; padding: 14px;
+  background: linear-gradient(135deg, #6B2BA8, #AA43FF);
+  color: #fff; border: none; border-radius: var(--radius); cursor: pointer;
+  transition: all .2s; display: flex; align-items: center;
+  justify-content: center; gap: 8px; letter-spacing: .04em;
+  text-decoration: none; margin-bottom: 10px;
+}
+.btn-claude:hover { opacity: .9; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(170,67,255,.3); }
+
+/* SUCCESS STATE */
+.success-box {
+  display: none; text-align: center; padding: 2rem;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); margin-bottom: 1rem;
+}
+.success-box.show { display: block; }
+.success-icon { font-size: 2.5rem; margin-bottom: 10px; }
+.success-title { font-family: 'Unbounded', sans-serif; font-size: 14px; font-weight: 700; margin-bottom: 6px; color: var(--green); }
+.success-sub { font-size: 12px; color: var(--muted2); font-weight: 300; line-height: 1.6; margin-bottom: 1.5rem; }
+
+.instructions {
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; text-align: left;
+}
+.inst-step { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 8px; }
+.inst-step:last-child { margin-bottom: 0; }
+.inst-num {
+  width: 20px; height: 20px; border-radius: 50%; background: var(--orange);
+  color: #fff; font-size: 9px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;
+}
+.inst-text { font-size: 12px; color: var(--text); line-height: 1.5; }
+.inst-text span { color: var(--orange); font-weight: 500; }
+
+.error-box {
+  background: rgba(224,82,82,.08); border: 1px solid rgba(224,82,82,.3);
+  border-radius: 8px; padding: .9rem 1.25rem; font-size: 12px; color: var(--red);
+  margin-bottom: 1rem; display: none;
+}
+.error-box.show { display: block; }
+
+/* RESET */
+.reset-btn {
+  font-size: 11px; color: var(--muted); cursor: pointer;
+  text-decoration: underline; background: none; border: none;
+  font-family: 'Instrument Sans', sans-serif; margin-top: .5rem;
+  display: block; text-align: center; width: 100%;
+}
+.reset-btn:hover { color: var(--text); }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">
+    <img src="data:image/png;base64,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" alt="Avalon" style="height:24px;width:auto;">
+    <div class="logo-tag">Strategy Engine</div>
+  </div>
+  <div style="font-size:11px;color:var(--muted2)">Generador de estrategia · Metodología Avalon</div>
+</header>
+
+<div class="wrap">
+
+  <div class="hero">
+    <h1>Brief adentro.<br><span>Estrategia completa</span> afuera.</h1>
+    <p>Subí el brief del cliente, copiás el prompt generado y lo pegás en Claude. En 60 segundos tenés los 7 tabs completos.</p>
+  </div>
+
+  <!-- STEPS INDICATOR -->
+  <div class="steps-row" id="steps-row">
+    <div class="step-item active" id="step1">
+      <div class="step-num">1</div>
+      Subir brief
+    </div>
+    <div class="step-item" id="step2">
+      <div class="step-num">2</div>
+      Leer y procesar
+    </div>
+    <div class="step-item" id="step3">
+      <div class="step-num">3</div>
+      Copiar prompt
+    </div>
+    <div class="step-item" id="step4">
+      <div class="step-num">4</div>
+      Pegar en Claude
+    </div>
+  </div>
+
+  <!-- UPLOAD -->
+  <div id="upload-section">
+    <div class="upload-zone" id="upload-zone"
+      onclick="document.getElementById('file-input').click()"
+      ondragover="event.preventDefault(); this.classList.add('drag')"
+      ondragleave="this.classList.remove('drag')"
+      ondrop="handleDrop(event)">
+      <div class="upload-icon">📄</div>
+      <div class="upload-title">Subí el brief del cliente</div>
+      <div class="upload-sub">Arrastrá el archivo acá o hacé clic para seleccionarlo</div>
+      <div class="fmt-pills">
+        <span class="fmt-pill">PDF</span>
+        <span class="fmt-pill">TXT</span>
+        <span class="fmt-pill">DOC</span>
+      </div>
+    </div>
+    <input type="file" id="file-input" accept=".pdf,.txt,.doc,.docx" onchange="handleFile(this.files[0])">
+
+    <div class="file-preview" id="file-preview">
+      <div style="font-size:24px">📋</div>
+      <div>
+        <div class="file-name" id="file-name"></div>
+        <div class="file-size" id="file-size"></div>
+      </div>
+    </div>
+
+    <div class="reading-state" id="reading-state">
+      <div class="spin"></div>
+      <div style="font-size:13px;color:var(--muted2)" id="reading-msg">Leyendo el brief...</div>
+    </div>
+
+    <div class="error-box" id="error-box"></div>
+
+    <button class="btn-primary" id="btn-process" onclick="processFile()" disabled>
+      📋 Generar prompt completo
+    </button>
+  </div>
+
+  <!-- SUCCESS -->
+  <div class="success-box" id="success-box">
+    <div class="success-icon">✅</div>
+    <div class="success-title">¡Prompt listo!</div>
+    <div class="success-sub">
+      El brief fue procesado. El prompt completo ya tiene toda la metodología Avalon + el contenido del brief adentro.<br>
+      Solo tenés que copiarlo y pegarlo en Claude.
+    </div>
+
+    <div class="instructions">
+      <div class="inst-step">
+        <div class="inst-num">1</div>
+        <div class="inst-text">Hacé clic en <span>"Copiar prompt completo"</span> → el prompt se copia automáticamente</div>
+      </div>
+      <div class="inst-step">
+        <div class="inst-num">2</div>
+        <div class="inst-text">Hacé clic en <span>"Abrir Claude"</span> → se abre una nueva conversación</div>
+      </div>
+      <div class="inst-step">
+        <div class="inst-num">3</div>
+        <div class="inst-text">Pegás en el chat con <span>Ctrl + V</span> y apretás Enter</div>
+      </div>
+      <div class="inst-step">
+        <div class="inst-num">4</div>
+        <div class="inst-text">En <span>~60 segundos</span> tenés los 7 tabs de la estrategia completa</div>
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="copyPrompt()" id="btn-copy">
+      📋 Copiar prompt completo
+    </button>
+
+    <a href="https://claude.ai/new" target="_blank" class="btn-claude">
+      ⚡ Abrir Claude
+    </a>
+
+    <button class="btn-secondary" onclick="resetAll()">← Cargar otro brief</button>
+  </div>
+
+</div>
+
+<script>
+// Setup PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+let briefText = '';
+let currentFile = null;
+
+// ── FILE HANDLING ──
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('upload-zone').classList.remove('drag');
+  handleFile(e.dataTransfer.files[0]);
+}
+
+async function handleFile(file) {
+  if (!file) return;
+  currentFile = file;
+
+  document.getElementById('file-name').textContent = file.name;
+  document.getElementById('file-size').textContent = (file.size / 1024).toFixed(1) + ' KB';
+  document.getElementById('file-preview').classList.add('show');
+  document.getElementById('btn-process').disabled = false;
+  document.getElementById('error-box').classList.remove('show');
+}
+
+async function processFile() {
+  if (!currentFile) return;
+
+  // UI state
+  document.getElementById('reading-state').classList.add('show');
+  document.getElementById('btn-process').disabled = true;
+  document.getElementById('error-box').classList.remove('show');
+
+  try {
+    const ext = currentFile.name.split('.').pop().toLowerCase();
+
+    if (ext === 'pdf') {
+      await readPDF(currentFile);
+    } else {
+      await readText(currentFile);
+    }
+
+    if (!briefText.trim()) throw new Error('No se pudo leer el contenido del archivo.');
+
+    setStep(3);
+    buildAndShowPrompt();
+
+  } catch(err) {
+    document.getElementById('reading-state').classList.remove('show');
+    document.getElementById('btn-process').disabled = false;
+    const errBox = document.getElementById('error-box');
+    errBox.textContent = 'Error: ' + err.message + '. Probá con un archivo TXT si el PDF no funciona.';
+    errBox.classList.add('show');
+  }
+}
+
+async function readPDF(file) {
+  document.getElementById('reading-msg').textContent = 'Leyendo PDF...';
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  let text = '';
+  document.getElementById('reading-msg').textContent = `Procesando ${pdf.numPages} páginas...`;
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    text += content.items.map(item => item.str).join(' ') + '\n';
+  }
+  briefText = text.trim();
+}
+
+async function readText(file) {
+  document.getElementById('reading-msg').textContent = 'Leyendo archivo...';
+  briefText = await file.text();
+}
+
+function buildAndShowPrompt() {
+  const prompt = buildPrompt(briefText);
+
+  document.getElementById('reading-state').classList.remove('show');
+  document.getElementById('upload-section').style.display = 'none';
+  document.getElementById('success-box').classList.add('show');
+
+  // Store prompt for copy
+  window._prompt = prompt;
+}
+
+function buildPrompt(brief) {
+  return `Sos el motor de estrategia de Avalon World Agency, una agencia de marketing digital premium especializada en clientes B2B y de servicios. Tu trabajo es generar una estrategia de comunicación completa usando la metodología real de Avalon, igual a cómo lo haría una estratega senior.
+
+BRIEF DEL CLIENTE:
+---
+${brief.substring(0, 12000)}
+---
+
+Generá una estrategia completa respondiendo SOLO en formato JSON válido, sin texto adicional, sin markdown, sin backticks. Estructura exacta:
+
+{
+  "cliente": "nombre del cliente extraído del brief",
+  "diagnostico": "Párrafo de 4-5 líneas: contexto del mercado, la situación crítica del consumidor, la oportunidad estratégica. Hablar del MOMENTO en que el cliente entra en la vida del consumidor.",
+  "mercado": "Párrafo de 3-4 líneas: panorama competitivo, fragmentación, qué hace mal la competencia, dónde está el espacio libre.",
+  "foda": {
+    "fortalezas": "Lista con • de 4-5 fortalezas reales del cliente",
+    "oportunidades": "Lista con • de 4-5 oportunidades del mercado",
+    "debilidades": "Lista con • de 3-4 debilidades",
+    "amenazas": "Lista con • de 3-4 amenazas"
+  },
+  "situacion_actual": "Párrafo de 3-4 líneas: dónde está parado el cliente hoy, qué funciona y qué no.",
+  "cone": "La frase del Concepto Núcleo de la Estrategia. Corta, poderosa, con el posicionamiento central.",
+  "cone_descripcion": "3-4 líneas explicando qué traduce el CONE.",
+  "objetivos": ["Objetivo 1", "Objetivo 2", "Objetivo 3", "Objetivo 4", "Objetivo 5"],
+  "identidad": {
+    "proposito": "1-2 líneas del propósito de marca",
+    "valores": "Lista con • de 5-6 valores con descripción corta",
+    "personalidad": "Qué ES y qué NO ES la marca",
+    "promesa": "La promesa de marca en 2-3 líneas",
+    "diferencial": "El diferencial competitivo clave"
+  },
+  "tono_positivo": ["Adjetivo1","Adjetivo2","Adjetivo3","Adjetivo4","Adjetivo5"],
+  "tono_negativo": ["No exagerado","No invasivo","No urgente"],
+  "limites": "Lista con • de 5-6 límites comunicacionales",
+  "personas": [
+    { "nombre": "Nombre, edad años", "tipo": "Segmento", "iniciales": "XX", "contexto": "2-3 líneas situación", "emocional": "Estado emocional: lista", "necesita": "Qué necesita", "valora": "Qué valora" },
+    { "nombre": "Nombre, edad años", "tipo": "Segmento", "iniciales": "XX", "contexto": "2-3 líneas situación", "emocional": "Estado emocional: lista", "necesita": "Qué necesita", "valora": "Qué valora" }
+  ],
+  "necesidades": [
+    {"tipo":"Funcionales","contenido":"Lista con • de 4-5 ítems"},
+    {"tipo":"Emocionales","contenido":"Lista con • de 4-5 ítems"},
+    {"tipo":"Frustraciones","contenido":"Lista con • de 4-5 ítems"}
+  ],
+  "pilares": [
+    {"numero":"1","nombre":"Nombre","objetivo":"Objetivo en 1 línea","ejemplos":"6-8 ejemplos con formato (Reel/Carrusel/Post/Historia) y tema concreto. Un ejemplo por línea."},
+    {"numero":"2","nombre":"Nombre","objetivo":"Objetivo","ejemplos":"6-8 ejemplos"},
+    {"numero":"3","nombre":"Nombre","objetivo":"Objetivo","ejemplos":"6-8 ejemplos"},
+    {"numero":"4","nombre":"Nombre","objetivo":"Objetivo","ejemplos":"6-8 ejemplos"},
+    {"numero":"5","nombre":"Nombre","objetivo":"Objetivo","ejemplos":"6-8 ejemplos"},
+    {"numero":"6","nombre":"Nombre","objetivo":"Objetivo","ejemplos":"6-8 ejemplos"}
+  ],
+  "calendario": [
+    {"semana":"Semana 1","pilar":"Pilar principal","contenido":"3-4 piezas con copy completo. Un post por línea."},
+    {"semana":"Semana 2","pilar":"Pilar","contenido":"3-4 piezas con copies"},
+    {"semana":"Semana 3","pilar":"Pilar","contenido":"3-4 piezas con copies"},
+    {"semana":"Semana 4","pilar":"Pilar","contenido":"3-4 piezas con copies"}
+  ],
+  "stories": [
+    {"semana":"Semana 1","items":"L: tema · M: tema · X: tema · J: tema · V: CTA"},
+    {"semana":"Semana 2","items":"L: tema · M: tema · X: tema · J: tema · V: CTA"},
+    {"semana":"Semana 3","items":"L: tema · M: tema · X: tema · J: tema · V: CTA"},
+    {"semana":"Semana 4","items":"L: tema · M: tema · X: tema · J: tema · V: CTA"}
+  ],
+  "kpis": [
+    {"metrica":"KPI","canal":"canal","frecuencia":"freq","objetivo":"meta","alerta":"alerta"},
+    {"metrica":"KPI","canal":"canal","frecuencia":"freq","objetivo":"meta","alerta":"alerta"},
+    {"metrica":"KPI","canal":"canal","frecuencia":"freq","objetivo":"meta","alerta":"alerta"},
+    {"metrica":"KPI","canal":"canal","frecuencia":"freq","objetivo":"meta","alerta":"alerta"},
+    {"metrica":"KPI","canal":"canal","frecuencia":"freq","objetivo":"meta","alerta":"alerta"},
+    {"metrica":"KPI","canal":"canal","frecuencia":"freq","objetivo":"meta","alerta":"alerta"}
+  ],
+  "impacto": {
+    "horas_ahorradas": "X hs",
+    "velocidad": "X% más rápido",
+    "calidad": "impacto en calidad",
+    "escalabilidad": "descripción"
+  },
+  "documento_entrega": "Documento formal completo tono Avalon. Saludo, diagnóstico, CONE, objetivos, enfoque por canal, pilares, próximos pasos, cierre. Mínimo 500 palabras. Comenzar: Estimado/a equipo de [CLIENTE],"
+}`;
+}
+
+function copyPrompt() {
+  navigator.clipboard.writeText(window._prompt).then(() => {
+    const btn = document.getElementById('btn-copy');
+    btn.textContent = '✅ ¡Copiado!';
+    btn.style.background = 'var(--green)';
+    setTimeout(() => {
+      btn.innerHTML = '📋 Copiar prompt completo';
+      btn.style.background = 'var(--orange)';
+    }, 2500);
+  });
+}
+
+function setStep(n) {
+  for (let i = 1; i <= 4; i++) {
+    const el = document.getElementById('step' + i);
+    el.classList.remove('active', 'done');
+    if (i < n) el.classList.add('done');
+    else if (i === n) el.classList.add('active');
+  }
+}
+
+function resetAll() {
+  briefText = '';
+  currentFile = null;
+  window._prompt = '';
+  document.getElementById('upload-section').style.display = 'block';
+  document.getElementById('success-box').classList.remove('show');
+  document.getElementById('file-preview').classList.remove('show');
+  document.getElementById('reading-state').classList.remove('show');
+  document.getElementById('error-box').classList.remove('show');
+  document.getElementById('btn-process').disabled = true;
+  document.getElementById('file-input').value = '';
+  setStep(1);
+}
+</script>
+</body>
+</html>
